@@ -68,7 +68,7 @@ flowchart TD
 | **Gestión Activa del Historial (RF-05 / RF-06)** | **Se Ajustó (Ampliación)** | Se habilitó la modificación y eliminación con confirmación modal y reversión automática de saldos en tiempo real, demostrando persistencia interactiva bidireccional. |
 | **Geolocalización y Geocercas** | **Se Descartó** | Se descartó para el MVP con el fin de evitar solicitar permisos invasivos de ubicación en segundo plano, protegiendo la privacidad del estudiante y previniendo el consumo excesivo de batería. |
 | **Sincronización Cloud y Backend (Supabase)** | **Se Aplaza (Incremento 3)** | La rúbrica del Examen 2 exige foco absoluto en **persistencia local y capacidades nativas**. El backend se integrará en la tercera etapa, manteniendo la base local como fuente primaria. |
-| **Generación y Descarga de Reportes PDF** | **Se Aplaza (Incremento 3)** | Se priorizó el desarrollo de la analítica visual interactiva en widgets de Flutter frente a la generación de documentos binarios PDF complejos. |
+| **Generación y Descarga de Reportes PDF (RF-12)** | **Se Implementó en el MVP** | Se integró el motor de renderizado vectorial de documentos PDF (`pdf` y `printing`) con visor interactivo en pantalla y exportación directa al sistema de archivos local (`path_provider`). |
 
 ---
 
