@@ -86,3 +86,4 @@ lib/
    flutter build apk --release
    ```
    El APK resultante se ubicará en `build/app/outputs/flutter-apk/app-release.apk`.
+

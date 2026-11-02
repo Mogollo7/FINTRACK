@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../models/expense.dart';
 import '../viewmodels/expense_viewmodel.dart';
 import 'widgets/add_expense_sheet.dart';
+import 'report_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -146,7 +147,7 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(width: 8),
             const Text('FinTrack', style: TextStyle(fontWeight: FontWeight.bold)),
             const Spacer(),
-            // Badge de conectividad (Capacidad móvil 7)
+            // Badge de conectividad (Capacidad móvil nativa)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
@@ -187,10 +188,15 @@ class _HomeScreenState extends State<HomeScreen> {
           ? const Center(child: CircularProgressIndicator())
           : _currentTabIndex == 0
               ? _buildDashboard(vm, currencyFormat)
-              : _buildHistory(vm, currencyFormat),
+              : _currentTabIndex == 1
+                  ? _buildHistory(vm, currencyFormat)
+                  : const ReportScreen(),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentTabIndex,
-        onDestinationSelected: (idx) => setState(() => _currentTabIndex = idx),
+        onDestinationSelected: (idx) {
+          HapticFeedback.selectionClick();
+          setState(() => _currentTabIndex = idx);
+        },
         destinations: const [
           NavigationDestination(
             icon: Icon(Icons.dashboard_outlined),
@@ -202,15 +208,22 @@ class _HomeScreenState extends State<HomeScreen> {
             selectedIcon: Icon(Icons.history),
             label: 'Historial',
           ),
+          NavigationDestination(
+            icon: Icon(Icons.picture_as_pdf_outlined),
+            selectedIcon: Icon(Icons.picture_as_pdf),
+            label: 'Informe PDF',
+          ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showAddSheet(context),
-        backgroundColor: Colors.teal,
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text('Registrar Gasto', style: TextStyle(color: Colors.white)),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButton: _currentTabIndex != 2
+          ? FloatingActionButton.extended(
+              onPressed: () => _showAddSheet(context),
+              backgroundColor: Colors.teal,
+              icon: const Icon(Icons.add, color: Colors.white),
+              label: const Text('Registrar Gasto', style: TextStyle(color: Colors.white)),
+            )
+          : null,
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 
@@ -223,7 +236,7 @@ class _HomeScreenState extends State<HomeScreen> {
             : Colors.teal;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 16.0, bottom: 84.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -337,6 +350,26 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
+          const SizedBox(height: 12),
+
+          // Banner de Acceso Rápido al Informe Descargable en PDF (RF-12)
+          Card(
+            color: Colors.amber.shade50,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            child: ListTile(
+              leading: const CircleAvatar(
+                backgroundColor: Colors.amber,
+                child: Icon(Icons.picture_as_pdf, color: Colors.white),
+              ),
+              title: const Text('Informe Contable Descargable (PDF)', style: TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: const Text('Descarga tu reporte de balance personal y gastos hormiga.'),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+              onTap: () {
+                HapticFeedback.selectionClick();
+                setState(() => _currentTabIndex = 2);
+              },
+            ),
+          ),
           const SizedBox(height: 16),
 
           // Sección de Últimos Movimientos en el Tablero
@@ -358,7 +391,7 @@ class _HomeScreenState extends State<HomeScreen> {
               padding: EdgeInsets.symmetric(vertical: 24.0),
               child: Center(
                 child: Text(
-                  'No hay gastos registrados aún.\nToca "+" para ingresar tu primera hormiga.',
+                  'No hay gastos registrados aún.\nToca "Registrar Gasto" para ingresar tu primera hormiga.',
                   textAlign: TextAlign.center,
                   style: TextStyle(color: Colors.grey),
                 ),
@@ -383,7 +416,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.only(bottom: 80, top: 12, left: 12, right: 12),
+      padding: const EdgeInsets.only(bottom: 84, top: 12, left: 12, right: 12),
       itemCount: vm.expenses.length,
       itemBuilder: (ctx, index) {
         final expense = vm.expenses[index];
@@ -465,4 +498,3 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
-
