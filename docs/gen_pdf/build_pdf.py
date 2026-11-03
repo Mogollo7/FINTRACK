@@ -1,7 +1,7 @@
 """MD del informe FinTrack (Avance 2) -> HTML con el estilo del PDF de Figma -> PDF con Chrome headless.
 
 Uso:  python build_pdf.py
-Salida: ../FinTrack_Avance2_Informe_Tecnico.pdf  (y informe.html al lado de este script)
+Salida: ../FinTrack_Avance2_Informe_Tecnico_borrador.pdf  (y informe.html al lado de este script)
 La paginación la hace un script en línea dentro del HTML (mide y reparte bloques en hojas A4).
 """
 import html
@@ -16,7 +16,7 @@ HERE = Path(__file__).resolve().parent
 DOCS = HERE.parent
 MD = DOCS / "Sustentacion_y_Guia_de_Desarrollo_FinTrack_Avance2.md"
 OUT_HTML = HERE / "informe.html"
-OUT_PDF = DOCS / "FinTrack_Avance2_Informe_Tecnico.pdf"
+OUT_PDF = DOCS / "FinTrack_Avance2_Informe_Tecnico_borrador.pdf"
 CAT_SVG = Path(r"D:\feibert\api\fintrack_app\assets\icon\cat_mascot.svg")
 CHROME = r"C:/Program Files/Google/Chrome/Application/chrome.exe"
 

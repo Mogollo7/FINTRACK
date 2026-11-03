@@ -1,0 +1,31 @@
+prueba,repeticion,valor_ms,nota
+arranque_frio_TotalTime,1,2447,am start -W; ThisTime no devuelto por el equipo
+arranque_frio_TotalTime,2,2695,am start -W; ThisTime no devuelto por el equipo
+arranque_frio_TotalTime,3,2490,am start -W; ThisTime no devuelto por el equipo
+arranque_frio_TotalTime,4,2387,am start -W; ThisTime no devuelto por el equipo
+arranque_frio_TotalTime,5,2422,am start -W; ThisTime no devuelto por el equipo
+arranque_frio_TotalTime,6,2407,am start -W; ThisTime no devuelto por el equipo
+arranque_frio_TotalTime,7,2416,am start -W; ThisTime no devuelto por el equipo
+arranque_frio_TotalTime,8,2477,am start -W; ThisTime no devuelto por el equipo
+arranque_frio_TotalTime,9,2499,am start -W; ThisTime no devuelto por el equipo
+arranque_frio_TotalTime,10,2468,am start -W; ThisTime no devuelto por el equipo
+registro_gasto_total,1,2482,incluye 2000 ms de pausas fijas
+registro_gasto_neto_estimado,1,482,total menos pausas fijas
+registro_gasto_total,2,2464,incluye 2000 ms de pausas fijas
+registro_gasto_neto_estimado,2,464,total menos pausas fijas
+registro_gasto_total,3,2443,incluye 2000 ms de pausas fijas
+registro_gasto_neto_estimado,3,443,total menos pausas fijas
+registro_gasto_total,4,2458,incluye 2000 ms de pausas fijas
+registro_gasto_neto_estimado,4,458,total menos pausas fijas
+registro_gasto_total,5,2495,incluye 2000 ms de pausas fijas
+registro_gasto_neto_estimado,5,495,total menos pausas fijas
+registro_gasto_total,6,2500,incluye 2000 ms de pausas fijas
+registro_gasto_neto_estimado,6,500,total menos pausas fijas
+registro_gasto_total,7,2505,incluye 2000 ms de pausas fijas
+registro_gasto_neto_estimado,7,505,total menos pausas fijas
+registro_gasto_total,8,2490,incluye 2000 ms de pausas fijas
+registro_gasto_neto_estimado,8,490,total menos pausas fijas
+registro_gasto_total,9,2473,incluye 2000 ms de pausas fijas
+registro_gasto_neto_estimado,9,473,total menos pausas fijas
+registro_gasto_total,10,2468,incluye 2000 ms de pausas fijas
+registro_gasto_neto_estimado,10,468,total menos pausas fijas

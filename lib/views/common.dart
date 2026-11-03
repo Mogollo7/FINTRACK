@@ -101,7 +101,7 @@ class Segmented extends StatelessWidget {
               onTap: () => onChanged(i),
               behavior: HitTestBehavior.opaque,
               child: Container(
-                height: 44,
+                height: 48,
                 alignment: Alignment.center,
                 color: i == index ? p.accent : Colors.transparent,
                 child: Text(labels[i],

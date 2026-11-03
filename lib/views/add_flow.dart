@@ -140,6 +140,11 @@ class _AmountScreenState extends State<AmountScreen> {
       final dest = pth.join(dir.path, 'tiquete_${DateTime.now().millisecondsSinceEpoch}${pth.extension(x.path)}');
       await File(x.path).copy(dest);
       setState(() => photo = dest);
+    } on PlatformException catch (e) {
+      // Permiso negado: el gasto se puede guardar igual, sin tiquete.
+      if (mounted) {
+        toast(context, e.code.contains('denied') ? 'Sin permiso de cámara: guarda el gasto sin tiquete o actívalo en Ajustes de Android' : 'No se pudo abrir la cámara');
+      }
     } catch (_) {
       if (mounted) toast(context, 'No se pudo abrir la cámara');
     }
@@ -201,8 +206,8 @@ class _AmountScreenState extends State<AmountScreen> {
           ),
         );
     return Scaffold(
-      appBar: ftBar(context, widget.income ? 'Nuevo ingreso' : 'Nuevo gasto', close: true),
-      body: ListView(padding: const EdgeInsets.fromLTRB(21, 0, 21, 24), children: [
+      appBar: ftBar(context, widget.editing != null ? 'Editar movimiento' : (widget.income ? 'Nuevo ingreso' : 'Nuevo gasto'), close: true),
+      body: ListView(padding: EdgeInsets.fromLTRB(21, 0, 21, 24 + MediaQuery.of(context).viewPadding.bottom), children: [
         Align(
           alignment: Alignment.centerLeft,
           child: Container(
@@ -231,7 +236,7 @@ class _AmountScreenState extends State<AmountScreen> {
                     setState(() => digits = '$v');
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
                     decoration: p.box(r: 99, off: 2, color: digits == '$v' ? p.accent : p.alt),
                     child: Text(money(v), style: TextStyle(fontWeight: FontWeight.w700, color: digits == '$v' ? p.onAccent : p.text)),
                   ),
@@ -392,10 +397,14 @@ class MovementsScreen extends StatefulWidget {
 
 class _MovementsScreenState extends State<MovementsScreen> {
   int tab = 0;
+  String? cat; // filtro por categoría (null = todas)
   @override
   Widget build(BuildContext context) {
+    final p = Pal.of(context);
     final s = context.watch<AppState>();
-    final list = s.movements.where((m) => tab == 0 || (tab == 1) == m.isIncome).toList();
+    final byTab = s.movements.where((m) => tab == 0 || (tab == 1) == m.isIncome).toList();
+    final cats = {for (final m in byTab) m.category}.toList()..sort();
+    final list = byTab.where((m) => cat == null || m.category == cat).toList();
     final groups = <String, List<Movement>>{};
     for (final m in list) {
       groups.putIfAbsent(relDay(m.date), () => []).add(m);
@@ -406,8 +415,33 @@ class _MovementsScreenState extends State<MovementsScreen> {
           ? StateView('sin-movimientos', 'Aún no hay movimientos', 'Registra tu primer gasto y aparecerá aquí.',
               action: 'Agregar gasto', onAction: () => push(context, const AddScreen()))
           : ListView(padding: const EdgeInsets.fromLTRB(21, 4, 21, 30), children: [
-              Segmented(const ['Todos', 'Ingresos', 'Gastos'], tab, (i) => setState(() => tab = i)),
-              const SizedBox(height: 14),
+              Segmented(const ['Todos', 'Ingresos', 'Gastos'], tab, (i) => setState(() {
+                    tab = i;
+                    cat = null;
+                  })),
+              const SizedBox(height: 12),
+              if (cats.length > 1)
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(children: [
+                    for (final c in [null, ...cats])
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8, bottom: 4),
+                        child: GestureDetector(
+                          onTap: () => setState(() => cat = c),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
+                            decoration: p.box(r: 99, off: 2, color: cat == c ? p.accent : p.card),
+                            child: Row(mainAxisSize: MainAxisSize.min, children: [
+                              if (c != null) ...[Icon(catIcon(c), size: 16, color: cat == c ? p.onAccent : p.text), const SizedBox(width: 6)],
+                              Text(c ?? 'Todas', style: TextStyle(fontWeight: FontWeight.w600, color: cat == c ? p.onAccent : p.text)),
+                            ]),
+                          ),
+                        ),
+                      ),
+                  ]),
+                ),
+              const SizedBox(height: 8),
               if (list.isEmpty) Padding(padding: const EdgeInsets.all(30), child: Center(child: Text('Nada por aquí.', style: TextStyle(color: Pal.of(context).text2)))),
               for (final g in groups.entries) ...[
                 Padding(padding: const EdgeInsets.only(top: 8, bottom: 10), child: Text(g.key, style: TextStyle(fontSize: 12, color: Pal.of(context).text2))),

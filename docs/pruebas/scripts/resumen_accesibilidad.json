@@ -1,0 +1,239 @@
+[
+ {
+  "pantalla": "Inicio",
+  "total": 11,
+  "menor48": 1,
+  "menor24": 0,
+  "etiquetados": 5,
+  "sin_etiqueta": 6,
+  "peores": [
+   {
+    "x": 63,
+    "y": 2281,
+    "w_dp": 364.7,
+    "h_dp": 26.3,
+    "lt48": true,
+    "lt24": false,
+    "labeled": true,
+    "label": "Taxi a la u / Transporte · hoy, 7:16 p. m. / -$ 22.000"
+   }
+  ]
+ },
+ {
+  "pantalla": "Agregar",
+  "total": 15,
+  "menor48": 2,
+  "menor24": 0,
+  "etiquetados": 14,
+  "sin_etiqueta": 1,
+  "peores": [
+   {
+    "x": 68,
+    "y": 313,
+    "w_dp": 180.7,
+    "h_dp": 44.0,
+    "lt48": true,
+    "lt24": false,
+    "labeled": true,
+    "label": "Ingreso"
+   },
+   {
+    "x": 610,
+    "y": 313,
+    "w_dp": 181.0,
+    "h_dp": 44.0,
+    "lt48": true,
+    "lt24": false,
+    "labeled": true,
+    "label": "Gasto"
+   }
+  ]
+ },
+ {
+  "pantalla": "Monto",
+  "total": 18,
+  "menor48": 3,
+  "menor24": 0,
+  "etiquetados": 15,
+  "sin_etiqueta": 3,
+  "peores": [
+   {
+    "x": 206,
+    "y": 740,
+    "w_dp": 80.3,
+    "h_dp": 35.0,
+    "lt48": true,
+    "lt24": false,
+    "labeled": true,
+    "label": "$ 2.000"
+   },
+   {
+    "x": 477,
+    "y": 740,
+    "w_dp": 80.3,
+    "h_dp": 35.0,
+    "lt48": true,
+    "lt24": false,
+    "labeled": true,
+    "label": "$ 5.000"
+   },
+   {
+    "x": 748,
+    "y": 740,
+    "w_dp": 88.7,
+    "h_dp": 35.0,
+    "lt48": true,
+    "lt24": false,
+    "labeled": true,
+    "label": "$ 10.000"
+   }
+  ]
+ },
+ {
+  "pantalla": "Movimientos",
+  "total": 11,
+  "menor48": 7,
+  "menor24": 0,
+  "etiquetados": 10,
+  "sin_etiqueta": 1,
+  "peores": [
+   {
+    "x": 973,
+    "y": 479,
+    "w_dp": 61.3,
+    "h_dp": 35.0,
+    "lt48": true,
+    "lt24": false,
+    "labeled": true,
+    "label": "Transporte"
+   },
+   {
+    "x": 63,
+    "y": 479,
+    "w_dp": 66.3,
+    "h_dp": 35.0,
+    "lt48": true,
+    "lt24": false,
+    "labeled": true,
+    "label": "Todas"
+   },
+   {
+    "x": 655,
+    "y": 479,
+    "w_dp": 98.0,
+    "h_dp": 35.0,
+    "lt48": true,
+    "lt24": false,
+    "labeled": true,
+    "label": "Trabajo"
+   }
+  ]
+ },
+ {
+  "pantalla": "Estadisticas",
+  "total": 10,
+  "menor48": 4,
+  "menor24": 0,
+  "etiquetados": 4,
+  "sin_etiqueta": 6,
+  "peores": [
+   {
+    "x": 68,
+    "y": 530,
+    "w_dp": 120.3,
+    "h_dp": 44.0,
+    "lt48": true,
+    "lt24": false,
+    "labeled": true,
+    "label": "Semana"
+   },
+   {
+    "x": 429,
+    "y": 530,
+    "w_dp": 120.7,
+    "h_dp": 44.0,
+    "lt48": true,
+    "lt24": false,
+    "labeled": true,
+    "label": "Mes"
+   },
+   {
+    "x": 791,
+    "y": 530,
+    "w_dp": 120.7,
+    "h_dp": 44.0,
+    "lt48": true,
+    "lt24": false,
+    "labeled": true,
+    "label": "Año"
+   }
+  ]
+ },
+ {
+  "pantalla": "Informe",
+  "total": 10,
+  "menor48": 3,
+  "menor24": 0,
+  "etiquetados": 4,
+  "sin_etiqueta": 6,
+  "peores": [
+   {
+    "x": 68,
+    "y": 512,
+    "w_dp": 120.3,
+    "h_dp": 44.0,
+    "lt48": true,
+    "lt24": false,
+    "labeled": true,
+    "label": "Semana"
+   },
+   {
+    "x": 429,
+    "y": 512,
+    "w_dp": 120.7,
+    "h_dp": 44.0,
+    "lt48": true,
+    "lt24": false,
+    "labeled": true,
+    "label": "Mes"
+   },
+   {
+    "x": 791,
+    "y": 512,
+    "w_dp": 120.7,
+    "h_dp": 44.0,
+    "lt48": true,
+    "lt24": false,
+    "labeled": true,
+    "label": "Año"
+   }
+  ]
+ },
+ {
+  "pantalla": "Perfil",
+  "total": 11,
+  "menor48": 0,
+  "menor24": 0,
+  "etiquetados": 5,
+  "sin_etiqueta": 6,
+  "peores": []
+ },
+ {
+  "pantalla": "Ajustes",
+  "total": 8,
+  "menor48": 0,
+  "menor24": 0,
+  "etiquetados": 7,
+  "sin_etiqueta": 1,
+  "peores": []
+ },
+ {
+  "pantalla": "Limites",
+  "total": 5,
+  "menor48": 0,
+  "menor24": 0,
+  "etiquetados": 4,
+  "sin_etiqueta": 1,
+  "peores": []
+ }
+]

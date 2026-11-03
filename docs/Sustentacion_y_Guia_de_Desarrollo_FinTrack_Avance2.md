@@ -44,7 +44,7 @@ La aplicación está hecha en Flutter (Dart) con arquitectura por capas: **vista
 | Inicio | Saldo disponible, accesos «Añadir dinero» y «Añadir gasto», resumen semanal con gráfico de área y variación frente a la semana anterior, equivalencia «dinero invisible» del gasto hormiga (en cafés de $2.500 o almuerzos de $12.000) y los 5 movimientos más recientes. |
 | Registro | Botón central «+»; tipo Ingreso/Gasto; 11 categorías de gasto y 5 de ingreso; fecha; teclado numérico propio (tecla «000»); montos rápidos de un toque ($2.000, $5.000, $10.000); nota; tiquete adjunto por cámara o galería; vibración al guardar. |
 | Clasificación | Automática al guardar: gasto ≤ $20.000 = **hormiga**; Hogar, Educación, Salud y Teléfono = **fijo**; el resto = **necesario**. |
-| Historial | Movimientos agrupados por día con pestañas Todos/Ingresos/Gastos; detalle con nota, foto del tiquete y fecha; editar y eliminar con confirmación. |
+| Historial | Movimientos agrupados por día con pestañas Todos/Ingresos/Gastos y filtro por categoría en tiempo real (chips); detalle con nota, foto del tiquete y fecha; editar y eliminar con confirmación. |
 | Estadísticas | Semana/Mes/Año, gastos o ingresos: dona fijo/necesario/hormiga, ingresos, gastos, balance y principales categorías. |
 | Límites y avisos | Límite hormiga semanal ($50.000) y mensual ($150.000) por defecto, más límites por categoría; pausa de «fricción consciente» (diálogo «¿Seguro?») antes de guardar un gasto que supera un límite; aviso al registrar si se llega al 90 %; centro de notificaciones con avisos sin leer/leídos (hormiga de la semana, «vas por buen camino», límite al 80 % o superado). |
 | Informe | Patrimonio neto (activos − pasivos + saldo); activos y pasivos; PDF tipo extracto bancario A4 por semana, mes o año, con visor y botón «Compartir». |
@@ -66,6 +66,7 @@ El diseño de referencia es el prototipo de Figma (más de 60 pantallas) y los r
 | Aplazó | OTP, nube y notificaciones del sistema | RF-03, RF-15 y RF-18 quedan para el siguiente incremento (punto 8); la app muestra un aviso donde corresponden. |
 | Aplazó | Moneda, idioma, filtros y nueva categoría | Las hojas existen, pero solo COP y español están activos; no hay categorías personalizadas. |
 | Agregó | Montos rápidos, «dinero invisible» y fricción consciente | Tomados de la propuesta de ajustes del segundo avance: menos toques al registrar, cifras traducidas a cosas cotidianas y una pausa antes de pasar un límite. |
+| Descartó | Geolocalización y geocercas | Se evita pedir el permiso de ubicación: rastrear al usuario no es necesario para anotar gastos y consume batería. |
 | Descartó | OCR del tiquete | Ya estaba fuera de alcance en el Examen 1: el tiquete se guarda como imagen, sin leer su texto. |
 
 ## 3. Flujo implementado | De la primera apertura al **informe en PDF**.
@@ -100,7 +101,7 @@ Todas las escrituras pasan por `AppState`, que guarda en SQLite y vuelve a leer 
 
 ## 6. Evidencia de ejecución en Android | Probado en un **Xiaomi real**.
 
-La app se instaló con `flutter run` (compilación *debug*) en un **Xiaomi Redmi Note 13 Pro 5G** (pantalla 1220 × 2712) conectado por USB. La sección «Demostración visual» reúne 22 capturas tomadas en ese teléfono con el usuario de prueba «Samuel Usma»: arranque (01–05), registro y consulta (06–13), cámara (08a–08b), PDF (14–16), persistencia (17–18), límites y modo oscuro (19–20). Datos de la demo: un ingreso «Pago monitoria» de $ 120.000 (Trabajo) y dos gastos, «Cafe con Ana» de $ 3.500 (Alimentos, hormiga, con tiquete) y «Taxi a la u» de $ 25.000 (Transporte, necesario); saldo de $ 91.500 y $ 28.500 gastados en la semana. Quedaron sin captura: exportar/importar, activos y pasivos y la pantalla «Sin conexión» (el indicador de la cabecera existe, pero no se documentó con modo avión).
+La app se instaló con `flutter run` (compilación *debug*) en un **Xiaomi Redmi Note 13 Pro 5G** (pantalla 1220 × 2712) conectado por USB. La sección «Demostración visual» reúne 22 capturas tomadas en ese teléfono con el usuario de prueba «Samuel Usma»: arranque (01–05), registro y consulta (06–13), cámara (08a–08b), PDF (14–16), persistencia (17–18), límites y modo oscuro (19–20). Datos de la demo: un ingreso «Pago monitoria» de $ 120.000 (Trabajo) y dos gastos, «Cafe con Ana» de $ 3.500 (Alimentos, hormiga, con tiquete) y «Taxi a la u» de $ 25.000 (Transporte, necesario); saldo de $ 91.500 y $ 28.500 gastados en la semana. Las pruebas de tiempo y accesibilidad (arranque en frío 2,5 s en *debug*, registro de un gasto con montos rápidos en ~2,5 s con pausas de la prueba, 15 de 15 contrastes WCAG AA, objetivos táctiles de 48 dp corregidos tras la medición) están en `docs/pruebas/PRUEBAS.md`, con sus gráficas; la fluidez no se pudo medir. Quedaron sin captura: exportar/importar, activos y pasivos y la pantalla «Sin conexión» (el indicador de la cabecera existe, pero no se documentó con modo avión).
 
 ## 7. Limitaciones actuales | Lo que **todavía no** resuelve.
 
@@ -145,11 +146,13 @@ Capturas tomadas en el Xiaomi Redmi Note 13 Pro 5G con la compilación *debug*. 
 - ![Gasto registrado](capturas/09_gasto_registrado.png) **09 · Gasto registrado.** Confirmación con vibración; el gasto de $ 3.500 ya está en SQLite con la etiqueta «hormiga».
 - ![Inicio con datos](capturas/10_inicio_con_datos.png) **10 · Inicio con datos.** Saldo de $ 91.500, $ 28.500 gastados en la semana, gráfico de área, la equivalencia «dinero invisible» (1 café) y la actividad reciente, recalculados al instante.
 - ![Movimientos](capturas/11_movimientos.png) **11 · Movimientos.** Historial agrupado por día con pestañas Todos, Ingresos y Gastos.
+- ![Filtro](capturas/11b_filtro_categoria.png) **11b · Filtro por categoría.** Los chips (Todas, Alimentos, Trabajo, Transporte…) filtran la lista al instante, sin recargar.
 - ![Detalle](capturas/12_detalle.png) **12 · Detalle.** Monto, nota, foto del tiquete y fecha, con botones Editar y Eliminar.
 - ![Estadísticas](capturas/13_estadisticas.png) **13 · Estadísticas.** Dona de fijos, necesarios y hormiga, balance del periodo y principales categorías.
 
 ### Capacidad móvil: cámara
 
+- ![Permiso negado](capturas/08c_permiso_negado.png) **08c · Permiso de cámara rechazado.** Si el usuario toca «No permitir», la app muestra un aviso y deja guardar el gasto sin tiquete; no se bloquea.
 - ![Permiso](capturas/08a_permiso_camara.png) **08a · Permiso de cámara.** Al tocar «Escanear con la cámara», Android pide el permiso; la app no accede a la cámara sin él.
 - ![Cámara](capturas/08_camara_tiquete.png) **08 · Cámara abierta.** *image_picker* abre la cámara del sistema. La imagen sale oscura porque el teléfono estaba boca abajo durante la prueba.
 - ![Tiquete adjunto](capturas/08b_tiquete_adjunto.png) **08b · Tiquete adjunto.** De vuelta en Monto aparece el archivo `tiquete_*.jpg`, ya copiado a la carpeta de documentos de la app.
@@ -163,6 +166,8 @@ Capturas tomadas en el Xiaomi Redmi Note 13 Pro 5G con la compilación *debug*. 
 ### Prueba de persistencia
 
 - ![Cierre forzado](capturas/17_cierre_forzado.png) **17 · Cierre forzado.** Vista de recientes con la tarjeta de FinTrack, justo antes de `am force-stop`, que termina el proceso y borra la memoria.
+- ![Edición](capturas/12b_editar.png) **12b · Edición.** «Taxi a la u» se cambió de $ 25.000 a $ 22.000 en la pantalla «Editar movimiento».
+- ![Cambio persiste](capturas/18b_cambio_persiste.png) **18b · El cambio persiste.** Tras cerrar la app por completo y abrirla de nuevo, el movimiento sigue en $ 22.000.
 - ![Reabierta](capturas/18_reabierta_persistencia.png) **18 · App reabierta.** Saldo de $ 91.500 y los mismos movimientos: se leyeron de SQLite y SharedPreferences.
 
 ### Más pantallas en el Android físico
