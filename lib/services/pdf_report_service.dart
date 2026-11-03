@@ -1,397 +1,205 @@
-import 'dart:io';
 import 'dart:typed_data';
 import 'package:intl/intl.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:printing/printing.dart';
-import '../models/expense.dart';
-import '../viewmodels/expense_viewmodel.dart';
+import '../state/app_state.dart';
 
-class PdfReportService {
-  static final NumberFormat _currencyFormat = NumberFormat.currency(
-    locale: 'es_CO',
-    symbol: '\$',
-    decimalDigits: 0,
-  );
-  static final DateFormat _dateFormat = DateFormat('dd/MM/yyyy HH:mm');
+const _amber = PdfColor.fromInt(0xFFFFA914);
+const _ink = PdfColor.fromInt(0xFF17140F);
+const _cream = PdfColor.fromInt(0xFFFFFDF3);
+const _alt = PdfColor.fromInt(0xFFF4F6C4);
+const _grey = PdfColor.fromInt(0xFF6B6454);
+const _green = PdfColor.fromInt(0xFF1B7F37);
+const _red = PdfColor.fromInt(0xFFC62828);
 
-  /// Genera los bytes del documento PDF con diseño editorial completo
-  static Future<Uint8List> generatePdf({
-    required ExpenseViewModel viewModel,
-    String studentName = 'Estudiante Universitario',
-  }) async {
-    final pdf = pw.Document();
+String periodLabel(Period p) {
+  final n = DateTime.now();
+  final mes = DateFormat('MMMM', 'es').format(n);
+  final cap = mes[0].toUpperCase() + mes.substring(1);
+  switch (p) {
+    case Period.week:
+      final (a, b) = (AppState.weekStart(n), AppState.weekStart(n).add(const Duration(days: 6)));
+      return 'Semana ${DateFormat('d MMM', 'es').format(a)} - ${DateFormat('d MMM yyyy', 'es').format(b)}';
+    case Period.month:
+      return '$cap de ${n.year}';
+    case Period.year:
+      return 'Año ${n.year}';
+  }
+}
 
-    final now = DateTime.now();
-    final expenses = viewModel.expenses;
-    final totalSpent = viewModel.totalSpent;
-    final budget = viewModel.weeklyBudget;
-    final remaining = viewModel.remainingBudget;
-    final percentConsumed = (viewModel.budgetProgressPercentage * 100).toInt();
+String reportFileName(Period p) {
+  final n = DateTime.now();
+  return switch (p) {
+    Period.week => 'Informe_semana_${DateFormat('yyyyMMdd').format(AppState.weekStart(n))}.pdf',
+    Period.month => 'Informe_${DateFormat('MMMM', 'es').format(n)}.pdf',
+    Period.year => 'Informe_${n.year}.pdf',
+  };
+}
 
-    // Agrupación por categoría
-    final Map<String, double> categoryTotals = {};
-    for (var exp in expenses) {
-      categoryTotals[exp.category] = (categoryTotals[exp.category] ?? 0.0) + exp.amount;
-    }
-    final sortedCategories = categoryTotals.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
+/// Extracto financiero en PDF (A4) con la paleta de FinTrack, al estilo de un extracto bancario.
+Future<Uint8List> buildStatement(AppState s, Period period, String holder, String email) async {
+  final doc = pw.Document(title: 'Extracto FinTrack', author: 'FinTrack');
+  final list = s.inPeriod(period)..sort((a, b) => a.date.compareTo(b.date));
+  final income = AppState.sum(list.where((m) => m.isIncome));
+  final spent = AppState.sum(list.where((m) => !m.isIncome));
+  final ant = AppState.sum(list.where((m) => m.isAnt));
+  final antPct = spent == 0 ? 0 : ant / spent * 100;
+  final df = DateFormat('dd/MM/yyyy');
+  final antCats = <String, double>{};
+  for (final m in list.where((m) => m.isAnt)) {
+    antCats[m.category] = (antCats[m.category] ?? 0) + m.amount;
+  }
+  final antSorted = antCats.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
 
-    // Colores corporativos FinTrack
-    const primaryTeal = PdfColor.fromInt(0xFF00695C); // Teal 800
-    const accentAmber = PdfColor.fromInt(0xFFFFA914); // Amber 500
-    const darkBg = PdfColor.fromInt(0xFF0F0D09); // Night 950
-    const lightGrey = PdfColor.fromInt(0xFFF5F5F5);
-    const borderGrey = PdfColor.fromInt(0xFFE0E0E0);
-    const textGrey = PdfColor.fromInt(0xFF555555);
+  pw.Widget cell(String t, {bool bold = false, pw.TextAlign a = pw.TextAlign.left, PdfColor c = _ink, double size = 8.5}) =>
+      pw.Padding(
+        padding: const pw.EdgeInsets.symmetric(horizontal: 5, vertical: 4),
+        child: pw.Text(t,
+            textAlign: a,
+            style: pw.TextStyle(fontSize: size, color: c, fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal)),
+      );
 
-    pdf.addPage(
-      pw.MultiPage(
-        pageFormat: PdfPageFormat.a4,
-        margin: const pw.EdgeInsets.all(32),
-        build: (context) => [
-          // ENCABEZADO PRINCIPAL
-          pw.Container(
-            padding: const pw.EdgeInsets.all(16),
-            decoration: pw.BoxDecoration(
-              color: primaryTeal,
-              borderRadius: pw.BorderRadius.circular(8),
-            ),
-            child: pw.Row(
-              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-              children: [
-                pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    pw.Text(
-                      'FinTrack',
-                      style: pw.TextStyle(
-                        fontSize: 26,
-                        fontWeight: pw.FontWeight.bold,
-                        color: PdfColors.white,
-                      ),
-                    ),
-                    pw.Text(
-                      'Reporte Contable Personal & Dinero Invisible',
-                      style: pw.TextStyle(
-                        fontSize: 12,
-                        color: PdfColor.fromInt(0xFFB2DFDB),
-                      ),
-                    ),
-                  ],
-                ),
-                pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.end,
-                  children: [
-                    pw.Text(
-                      'Fecha: ${DateFormat('dd/MM/yyyy').format(now)}',
-                      style: const pw.TextStyle(fontSize: 10, color: PdfColors.white),
-                    ),
-                    pw.Text(
-                      'Usuario: $studentName',
-                      style: const pw.TextStyle(fontSize: 10, color: PdfColors.white),
-                    ),
-                    pw.Text(
-                      'Periodo: Semana en curso',
-                      style: const pw.TextStyle(fontSize: 10, color: PdfColors.white),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          pw.SizedBox(height: 16),
+  pw.Widget kv(String k, String v, {PdfColor c = _ink, bool bold = false}) => pw.Padding(
+        padding: const pw.EdgeInsets.symmetric(vertical: 3),
+        child: pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [
+          pw.Text(k, style: const pw.TextStyle(fontSize: 10, color: _ink)),
+          pw.Text(v, style: pw.TextStyle(fontSize: 10, color: c, fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal)),
+        ]),
+      );
 
-          // TARJETAS DE INDICADORES FINANCIEROS (KPIS)
-          pw.Row(
-            children: [
-              _buildKpiCard(
-                title: 'Total Gastos Hormiga',
-                value: _currencyFormat.format(totalSpent),
-                color: totalSpent > budget ? PdfColors.red700 : primaryTeal,
-              ),
-              pw.SizedBox(width: 8),
-              _buildKpiCard(
-                title: 'Presupuesto Semanal',
-                value: _currencyFormat.format(budget),
-                color: primaryTeal,
-              ),
-              pw.SizedBox(width: 8),
-              _buildKpiCard(
-                title: 'Presupuesto Restante',
-                value: _currencyFormat.format(remaining),
-                color: remaining > 0 ? primaryTeal : PdfColors.red700,
-              ),
-              pw.SizedBox(width: 8),
-              _buildKpiCard(
-                title: 'Consumo',
-                value: '$percentConsumed%',
-                color: percentConsumed >= 100
-                    ? PdfColors.red700
-                    : percentConsumed >= 80
-                        ? PdfColors.orange700
-                        : primaryTeal,
-              ),
-            ],
-          ),
-          pw.SizedBox(height: 16),
+  var running = 0.0;
+  final rows = <pw.TableRow>[
+    pw.TableRow(
+      decoration: const pw.BoxDecoration(color: _amber),
+      children: [
+        cell('Fecha', bold: true),
+        cell('Descripcion', bold: true),
+        cell('Categoria', bold: true),
+        cell('Tipo', bold: true),
+        cell('Debito', bold: true, a: pw.TextAlign.right),
+        cell('Credito', bold: true, a: pw.TextAlign.right),
+        cell('Saldo', bold: true, a: pw.TextAlign.right),
+      ],
+    ),
+  ];
+  for (var i = 0; i < list.length; i++) {
+    final m = list[i];
+    running += m.isIncome ? m.amount : -m.amount;
+    rows.add(pw.TableRow(
+      decoration: pw.BoxDecoration(color: i.isEven ? _cream : PdfColors.white),
+      children: [
+        cell(df.format(m.date)),
+        cell(m.note.isEmpty ? m.category : m.note),
+        cell(m.category),
+        cell(m.isIncome ? 'Ingreso' : (m.isAnt ? 'Hormiga' : m.kind[0].toUpperCase() + m.kind.substring(1))),
+        cell(m.isIncome ? '' : money(m.amount), a: pw.TextAlign.right, c: _red),
+        cell(m.isIncome ? money(m.amount) : '', a: pw.TextAlign.right, c: _green),
+        cell(money(running), a: pw.TextAlign.right, bold: true),
+      ],
+    ));
+  }
 
-          // SECCIÓN: CONCIENCIA FINANCIERA Y EQUIVALENCIA COTIDIANA
-          pw.Container(
-            padding: const pw.EdgeInsets.all(12),
-            decoration: pw.BoxDecoration(
-              color: PdfColor.fromInt(0xFFFFF8E1), // Amber claro
-              border: pw.Border.all(color: accentAmber, width: 1),
-              borderRadius: pw.BorderRadius.circular(6),
-            ),
-            child: pw.Row(
-              children: [
-                pw.Container(
-                  width: 8,
-                  height: 36,
-                  color: accentAmber,
-                ),
-                pw.SizedBox(width: 12),
-                pw.Expanded(
-                  child: pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
-                    children: [
-                      pw.Text(
-                        'EQUIVALENCIA DEL DINERO INVISIBLE:',
-                        style: pw.TextStyle(
-                          fontSize: 10,
-                          fontWeight: pw.FontWeight.bold,
-                          color: PdfColor.fromInt(0xFFE65100),
-                        ),
-                      ),
-                      pw.SizedBox(height: 4),
-                      pw.Text(
-                        viewModel.dynamicEquivalence,
-                        style: const pw.TextStyle(fontSize: 11),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          pw.SizedBox(height: 16),
-
-          // SECCIÓN: DISTRIBUCIÓN POR CATEGORÍAS
-          pw.Text(
-            'Distribución de Gastos por Categoría',
-            style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold, color: darkBg),
-          ),
-          pw.SizedBox(height: 8),
-          if (sortedCategories.isEmpty)
-            pw.Text('No hay consumos registrados en este periodo.',
-                style: const pw.TextStyle(fontSize: 11, color: textGrey))
-          else
-            pw.Table(
-              border: pw.TableBorder.all(color: borderGrey, width: 0.5),
-              children: [
-                pw.TableRow(
-                  decoration: const pw.BoxDecoration(color: lightGrey),
-                  children: [
-                    _tableCell('Categoría', isHeader: true),
-                    _tableCell('Total (\$ COP)', isHeader: true, alignRight: true),
-                    _tableCell('% del Gasto Hormiga', isHeader: true, alignRight: true),
-                  ],
-                ),
-                ...sortedCategories.map((entry) {
-                  final catPct = totalSpent > 0 ? (entry.value / totalSpent * 100).toStringAsFixed(1) : '0';
-                  return pw.TableRow(
-                    children: [
-                      _tableCell(entry.key),
-                      _tableCell(_currencyFormat.format(entry.value), alignRight: true),
-                      _tableCell('$catPct %', alignRight: true),
-                    ],
-                  );
-                }),
-              ],
-            ),
-          pw.SizedBox(height: 18),
-
-          // SECCIÓN: DETALLE DE MOVIMIENTOS REGISTRADOS
-          pw.Text(
-            'Historial Detallado de Microgastos',
-            style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold, color: darkBg),
-          ),
-          pw.SizedBox(height: 8),
-          if (expenses.isEmpty)
-            pw.Text('No existen transacciones en el historial local.',
-                style: const pw.TextStyle(fontSize: 11, color: textGrey))
-          else
-            pw.Table(
-              border: pw.TableBorder.all(color: borderGrey, width: 0.5),
-              children: [
-                pw.TableRow(
-                  decoration: const pw.BoxDecoration(color: lightGrey),
-                  children: [
-                    _tableCell('Fecha / Hora', isHeader: true),
-                    _tableCell('Categoría', isHeader: true),
-                    _tableCell('Nota / Concepto', isHeader: true),
-                    _tableCell('Comprobante', isHeader: true),
-                    _tableCell('Monto', isHeader: true, alignRight: true),
-                  ],
-                ),
-                ...expenses.map((e) {
-                  return pw.TableRow(
-                    children: [
-                      _tableCell(_dateFormat.format(e.date)),
-                      _tableCell(e.category),
-                      _tableCell(e.note.isEmpty ? '—' : e.note),
-                      _tableCell(e.photoPath != null ? 'Foto adjunta' : 'Sin foto'),
-                      _tableCell(_currencyFormat.format(e.amount),
-                          alignRight: true, color: PdfColors.red800),
-                    ],
-                  );
-                }),
-              ],
-            ),
-          pw.SizedBox(height: 20),
-
-          // RESUMEN PATRIMONIAL ESTIMADO (RF-12)
-          pw.Container(
-            padding: const pw.EdgeInsets.all(12),
-            decoration: pw.BoxDecoration(
-              border: pw.Border.all(color: primaryTeal, width: 0.8),
-              borderRadius: pw.BorderRadius.circular(6),
-            ),
-            child: pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
-              children: [
-                pw.Text(
-                  'Balance Patrimonial Simplificado (RF-12)',
-                  style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold, color: primaryTeal),
-                ),
-                pw.SizedBox(height: 6),
-                pw.Row(
-                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                  children: [
-                    pw.Text('Ingreso estimado de referencia:', style: const pw.TextStyle(fontSize: 10)),
-                    pw.Text(_currencyFormat.format(1200000),
-                        style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold)),
-                  ],
-                ),
-                pw.Row(
-                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                  children: [
-                    pw.Text('(-) Total gastos hormiga acumulados:', style: const pw.TextStyle(fontSize: 10)),
-                    pw.Text('- ${_currencyFormat.format(totalSpent)}',
-                        style: pw.TextStyle(fontSize: 10, color: PdfColors.red800)),
-                  ],
-                ),
-                pw.Divider(color: borderGrey, thickness: 0.5),
-                pw.Row(
-                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                  children: [
-                    pw.Text('(=) Margen disponible para ahorro:',
-                        style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold)),
-                    pw.Text(
-                      _currencyFormat.format(1200000 - totalSpent),
-                      style: pw.TextStyle(
-                        fontSize: 11,
-                        fontWeight: pw.FontWeight.bold,
-                        color: primaryTeal,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          pw.SizedBox(height: 24),
-
-          // PIE DE PÁGINA
-          pw.Center(
-            child: pw.Text(
-              'FinTrack Móvil · Proyecto Académico · Corporación Universitaria Lasallista (2026)',
-              style: const pw.TextStyle(fontSize: 9, color: textGrey),
-            ),
-          ),
-        ],
+  doc.addPage(pw.MultiPage(
+    pageTheme: const pw.PageTheme(
+      pageFormat: PdfPageFormat.a4,
+      margin: pw.EdgeInsets.fromLTRB(32, 28, 32, 36),
+    ),
+    footer: (c) => pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [
+      pw.Text('FinTrack - extracto generado en el dispositivo. Documento informativo, sin validez contable.',
+          style: const pw.TextStyle(fontSize: 7, color: _grey)),
+      pw.Text('Pagina ${c.pageNumber} de ${c.pagesCount}', style: const pw.TextStyle(fontSize: 8, color: _grey)),
+    ]),
+    build: (c) => [
+      pw.Container(
+        padding: const pw.EdgeInsets.all(14),
+        decoration: pw.BoxDecoration(color: _amber, border: pw.Border.all(color: _ink, width: 1.5), borderRadius: pw.BorderRadius.circular(10)),
+        child: pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, crossAxisAlignment: pw.CrossAxisAlignment.end, children: [
+          pw.RichText(
+              text: pw.TextSpan(style: const pw.TextStyle(fontSize: 26, color: _ink), children: [
+            const pw.TextSpan(text: 'Fin'),
+            pw.TextSpan(text: 'Track', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+          ])),
+          pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.end, children: [
+            pw.Text('EXTRACTO FINANCIERO', style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold, color: _ink)),
+            pw.Text(periodLabel(period), style: const pw.TextStyle(fontSize: 10, color: _ink)),
+          ]),
+        ]),
       ),
-    );
-
-    return pdf.save();
-  }
-
-  static pw.Widget _buildKpiCard({
-    required String title,
-    required String value,
-    required PdfColor color,
-  }) {
-    return pw.Expanded(
-      child: pw.Container(
-        padding: const pw.EdgeInsets.symmetric(vertical: 8, horizontal: 6),
-        decoration: pw.BoxDecoration(
-          border: pw.Border.all(color: color, width: 1),
-          borderRadius: pw.BorderRadius.circular(6),
+      pw.SizedBox(height: 12),
+      pw.Row(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
+        pw.Expanded(
+          child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
+            pw.Text('Titular', style: const pw.TextStyle(fontSize: 8, color: _grey)),
+            pw.Text(holder, style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
+            pw.Text(email, style: const pw.TextStyle(fontSize: 9, color: _grey)),
+          ]),
         ),
-        child: pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.center,
-          children: [
-            pw.Text(
-              title,
-              textAlign: pw.TextAlign.center,
-              style: const pw.TextStyle(fontSize: 8, color: PdfColor.fromInt(0xFF555555)),
-            ),
-            pw.SizedBox(height: 4),
-            pw.Text(
-              value,
-              textAlign: pw.TextAlign.center,
-              style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold, color: color),
-            ),
-          ],
-        ),
+        pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.end, children: [
+          pw.Text('Generado el', style: const pw.TextStyle(fontSize: 8, color: _grey)),
+          pw.Text(DateFormat('dd/MM/yyyy HH:mm').format(DateTime.now()), style: const pw.TextStyle(fontSize: 10)),
+          pw.Text('Moneda: COP', style: const pw.TextStyle(fontSize: 9, color: _grey)),
+        ]),
+      ]),
+      pw.SizedBox(height: 12),
+      pw.Container(
+        padding: const pw.EdgeInsets.all(12),
+        decoration: pw.BoxDecoration(color: _alt, border: pw.Border.all(color: _ink, width: 1), borderRadius: pw.BorderRadius.circular(8)),
+        child: pw.Column(children: [
+          pw.Align(alignment: pw.Alignment.centerLeft, child: pw.Text('Resumen del periodo', style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold))),
+          pw.SizedBox(height: 4),
+          kv('Total ingresos (creditos)', money(income), c: _green),
+          kv('Total gastos (debitos)', money(spent), c: _red),
+          kv('Balance del periodo', money(income - spent, sign: true), bold: true),
+          pw.Divider(color: _ink, thickness: .5),
+          kv('Patrimonio neto', money(s.netWorth), bold: true),
+          kv('Gasto hormiga', '${money(ant)} (${antPct.toStringAsFixed(1).replaceAll('.', ',')} %)'),
+        ]),
       ),
-    );
-  }
-
-  static pw.Widget _tableCell(
-    String text, {
-    bool isHeader = false,
-    bool alignRight = false,
-    PdfColor? color,
-  }) {
-    return pw.Padding(
-      padding: const pw.EdgeInsets.all(5),
-      child: pw.Text(
-        text,
-        textAlign: alignRight ? pw.TextAlign.right : pw.TextAlign.left,
-        style: pw.TextStyle(
-          fontSize: isHeader ? 9 : 8.5,
-          fontWeight: isHeader ? pw.FontWeight.bold : pw.FontWeight.normal,
-          color: color ?? (isHeader ? PdfColors.black : const PdfColor.fromInt(0xFF333333)),
+      pw.SizedBox(height: 14),
+      pw.Text('Detalle de movimientos', style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold)),
+      pw.SizedBox(height: 6),
+      if (list.isEmpty)
+        pw.Text('Sin movimientos en este periodo.', style: const pw.TextStyle(fontSize: 10, color: _grey))
+      else
+        pw.Table(
+          border: const pw.TableBorder(bottom: pw.BorderSide(color: _ink, width: .8), horizontalInside: pw.BorderSide(color: _alt, width: .5)),
+          columnWidths: const {
+            0: pw.FixedColumnWidth(58),
+            1: pw.FlexColumnWidth(2.0),
+            2: pw.FlexColumnWidth(1.3),
+            3: pw.FixedColumnWidth(60),
+            4: pw.FixedColumnWidth(62),
+            5: pw.FixedColumnWidth(62),
+            6: pw.FixedColumnWidth(66),
+          },
+          children: rows,
         ),
-      ),
-    );
-  }
-
-  /// Guarda el archivo PDF en el almacenamiento local del dispositivo Android
-  static Future<File> savePdfLocally({
-    required ExpenseViewModel viewModel,
-    String studentName = 'Estudiante',
-  }) async {
-    final bytes = await generatePdf(viewModel: viewModel, studentName: studentName);
-    final outputDir = await getApplicationDocumentsDirectory();
-    final fileName = 'FinTrack_Informe_${DateFormat('yyyyMMdd_HHmm').format(DateTime.now())}.pdf';
-    final file = File('${outputDir.path}/$fileName');
-    await file.writeAsBytes(bytes);
-    return file;
-  }
-
-  /// Abre el diálogo nativo de Android para compartir o guardar el PDF
-  static Future<void> shareOrPrintPdf({
-    required ExpenseViewModel viewModel,
-    String studentName = 'Estudiante',
-  }) async {
-    final bytes = await generatePdf(viewModel: viewModel, studentName: studentName);
-    await Printing.sharePdf(
-      bytes: bytes,
-      filename: 'FinTrack_Informe_Contable.pdf',
-    );
-  }
+      if (antSorted.isNotEmpty) ...[
+        pw.SizedBox(height: 16),
+        pw.Text('Gastos hormiga por categoria', style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold)),
+        pw.SizedBox(height: 6),
+        for (final e in antSorted)
+          pw.Padding(
+            padding: const pw.EdgeInsets.symmetric(vertical: 3),
+            child: pw.Row(children: [
+              pw.SizedBox(width: 90, child: pw.Text(e.key, style: const pw.TextStyle(fontSize: 9))),
+              pw.Expanded(
+                child: pw.Container(
+                  height: 8,
+                  decoration: pw.BoxDecoration(color: _alt, borderRadius: pw.BorderRadius.circular(4)),
+                  child: pw.Row(children: [
+                    pw.Expanded(
+                        flex: (e.value / antSorted.first.value * 100).round().clamp(1, 100),
+                        child: pw.Container(decoration: pw.BoxDecoration(color: _amber, borderRadius: pw.BorderRadius.circular(4)))),
+                    pw.Expanded(flex: 100 - (e.value / antSorted.first.value * 100).round().clamp(1, 100), child: pw.SizedBox()),
+                  ]),
+                ),
+              ),
+              pw.SizedBox(width: 70, child: pw.Text(money(e.value), textAlign: pw.TextAlign.right, style: const pw.TextStyle(fontSize: 9))),
+            ]),
+          ),
+      ],
+    ],
+  ));
+  return doc.save();
 }
