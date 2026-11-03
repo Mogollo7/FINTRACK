@@ -15,7 +15,7 @@ Equipo: Juan Sebastián Martínez Galeano, Cesar Ocampo Raigosa, Samuel Usma Bra
 |---|---|---|
 | A | Código fuente | Este repositorio: `lib/`, `android/`, `assets/`, `test/` |
 | B | Demostración visual (pantallazos con descripción) | [Sección «Demostración»](#demostración-visual) y `docs/capturas/` |
-| C | Informe técnico corto (8 puntos) | **[PDF del informe](docs/FinTrack_Avance2_Informe_Tecnico.pdf)** (27 páginas, diseñado en [Figma](https://www.figma.com/design/9vhSrNs3T7t50uCKancJrI/pdf?node-id=76-2)) · texto fuente en [`docs/Sustentacion_y_Guia_de_Desarrollo_FinTrack_Avance2.md`](docs/Sustentacion_y_Guia_de_Desarrollo_FinTrack_Avance2.md) |
+| C | Informe técnico corto (8 puntos) | **[PDF del informe](docs/FinTrack_Avance2_Informe_Tecnico.pdf)** (29 páginas, diseñado en [Figma](https://www.figma.com/design/9vhSrNs3T7t50uCKancJrI/pdf?node-id=76-2)) · texto fuente en [`docs/Sustentacion_y_Guia_de_Desarrollo_FinTrack_Avance2.md`](docs/Sustentacion_y_Guia_de_Desarrollo_FinTrack_Avance2.md) |
 | — | Pruebas de tiempo y accesibilidad | [`docs/pruebas/PRUEBAS.md`](docs/pruebas/PRUEBAS.md) |
 | — | Decisiones técnicas (ADR-007 a 011) | [`docs/ADR_Examen2.md`](docs/ADR_Examen2.md) |
 | — | Planificación integral y marco teórico completo | [`docs/FinTrack_Segunda_Entrega.md`](docs/FinTrack_Segunda_Entrega.md) |

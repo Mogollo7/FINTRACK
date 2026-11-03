@@ -10,6 +10,18 @@
 
 ---
 
+## Resumen ejecutivo y justificación de los ajustes
+
+Este documento presenta la sustentación técnica y metodológica de los ajustes e innovaciones de la versión ejecutable (Examen 2) de FinTrack: la evolución desde la arquitectura teórica del Examen 1 hacia un prototipo móvil funcional hecho en Flutter, con su flujo, su persistencia local y su hoja de ruta de codificación.
+
+Los ajustes responden a tres pilares: **usabilidad y ergonomía móvil** (menos fricción al capturar datos en movimiento), **viabilidad técnica local** (persistencia en el teléfono e integración con el hardware) y **enfoque incremental del MVP** (una versión sin conexión, sin dependencias externas).
+
+| Elemento | Planteamiento inicial | Ajuste implementado | Justificación |
+|---|---|---|---|
+| Registro rápido | Tiempo máximo de 3 s y respuesta táctil menor a 200 ms | Montos rápidos de un toque y teclado propio | Escribir cifras en la calle genera fricción; un toque basta para un gasto habitual |
+| «Dinero invisible» | Total gastado de la semana y del mes | Equivalencias en cafés o almuerzos | Las cifras frías no impactan a los jóvenes |
+| Historial | Consulta secundaria | Filtro por categoría, editar y eliminar | Flujo interactivo íntegro y separación interfaz/almacenamiento |
+
 ## 0. Introducción | Pequeños gastos, **grandes fugas**.
 
 FinTrack es una aplicación para Android que funciona como un cuaderno personal de gastos e ingresos: permite anotar en segundos los gastos pequeños y frecuentes, ver cuánto suman y recibir un aviso antes de pasar un límite propio. No pretende ser una herramienta de control financiero avanzado ni de uso empresarial.
@@ -228,3 +240,16 @@ Roldán, P. N. (2017). *Gastos hormiga: Qué son, ejemplos y cómo identificarlo
 *sqflite* [Paquete de software]. (s. f.). pub.dev. https://pub.dev/packages/sqflite
 
 Supabase. (s. f.). *Passwordless email logins*. https://supabase.com/docs/guides/auth/passwordless-login/auth-email-otp
+
+
+## Anexo. Hoja de ruta de codificación (equivalencia Capacitor → Flutter)
+
+| Fase | En la propuesta (Ionic y Capacitor) | En FinTrack (Flutter) | Estado |
+|---|---|---|---|
+| 1. Infraestructura y plugins | Proyecto Ionic/Angular y plugins de Capacitor | Proyecto Flutter con sqflite, shared_preferences, path_provider, image_picker, connectivity_plus, pdf, printing y HapticFeedback | Hecha |
+| 2. Datos y persistencia | Transaction, Category, Budget sobre Preferences y Filesystem | Movement, AssetItem, LimitItem; SQLite, SharedPreferences y archivos | Hecha |
+| 3. Lógica y estado | ViewModel con RxJS | AppState (ChangeNotifier con Provider) | Hecha |
+| 4. Vistas | Tablero, modal de registro rápido, historial con filtros | Inicio, Agregar/Monto, Movimientos con filtro, Límites, Informe | Hecha |
+| 5. Android y validación | npx cap sync android; pruebas cerrar/abrir | flutter run / build apk; cierre forzado en un Xiaomi; capturas y pruebas | Hecha (fluidez sin medir) |
+
+El reporte PDF, que la propuesta aplazaba al incremento 3, se adelantó y ya está implementado.
